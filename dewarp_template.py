@@ -4,11 +4,17 @@ import numpy as np
 from math import sqrt, atan, exp, sin, cos, log, tan, pi
 
 
+def un_sterad():
+	pass
+
+
 def un_log(yx, params):
 	ynd, xnd = yx[0], yx[1]
 	alpha = np.arctan2(ynd, xnd)
 	rd = sqrt(xnd**2 + ynd**2)
+
 	ru = params['s'] * log(1 + params['lambda']*rd)
+
 	ynu = ru*sin(alpha)
 	xnu = ru*cos(alpha)
 	return (ynu, xnu)
@@ -19,7 +25,9 @@ def un_fov(yx, fov):
 	ynd, xnd = yx[0], yx[1]
 	alpha = np.arctan2(ynd, xnd)
 	rnd = sqrt(ynd**2 + xnd**2)
+
 	rnu = atan(rnd*tan(fov))/tan(fov)
+
 	ynu = rnu*sin(alpha) 
 	xnu = rnu*cos(alpha) 
 	return (ynu, xnu)
@@ -29,10 +37,44 @@ def un_fitzgibbon(yx, params):
 	ynd, xnd = yx[0]/(params['h']/2), yx[1]/(params['w']/2)
 	alpha = np.arctan2(ynd, xnd)
 	rnd = sqrt((xnd)**2 + (ynd)**2)
+
 	rnu = rnd/(1. - params['k']*(rnd**2))
+
 	ynu = rnu*sin(alpha) 
 	xnu = rnu*cos(alpha) 
 	return (ynu*(params['h']/2), xnu*(params['w']/2))
+
+
+# params format {'degree' : degree of polynome, 'ks' : vector of dist coefs equal to degree in length}
+def un_radial(yx, params):
+	ynd, xnd = yx[0], yx[1]
+	alpha = np.arctan2(ynd, xnd)
+	rd = sqrt(xnd**2 + ynd**2)
+
+	dgr = params['degree']
+	powers = np.array(range(dgr))
+	rd_vec = np.power(np.array([rd]*dgr), powers)
+	ru = rd * np.dot(params['ks'].T, rd_vec)
+
+	ynu = ru*sin(alpha)
+	xnu = ru*cos(alpha)
+	return (ynu, xnu)
+
+
+# params format {'degree' : degree of polynome, 'ks' : vector of dist coefs equal to degree in length}
+def un_radial(yx, params):
+	ynd, xnd = yx[0], yx[1]
+	alpha = np.arctan2(ynd, xnd)
+	rd = sqrt(xnd**2 + ynd**2)
+
+	dgr = params['degree']
+	powers = np.array(range(dgr))
+	rd_vec = np.power(np.array([rd]*dgr), powers)
+	ru = rd * np.dot(params['ks'].T, rd_vec)
+
+	ynu = ru*sin(alpha)
+	xnu = ru*cos(alpha)
+	return (ynu, xnu)
 
 
 def dist_remap(h, w, py, px, dist_func, dist_params):
@@ -87,26 +129,44 @@ def dist_img(src_dir, dist_func, dist_params):
 	img = cv2.imread(src_dir)
 	# img = cv2.copyMakeBorder(img, 128, 128, 0, 0, cv2.BORDER_CONSTANT)
 	h, w = img.shape[0], img.shape[1]
-	mapy, mapx = dist_remap(h, w, 0, 0, dist_func, dist_params)
+	py, px = int(h/4), int(w/4)
+	mapy, mapx = dist_remap(h, w, py, px, dist_func, dist_params)
 
 	start = time.time()
 	res_img = cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR)
 	end = time.time()
 	print('Remap time:', end - start)
 	
-	cv2.imshow('fisheye', cv2.flip(res_img, 0))
+	cv2.imshow('fisheye', res_img)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
-	cv2.imwrite('vectorized.jpg', cv2.flip(res_img, 0))
+	cv2.imwrite('imgs/fitz.jpg', res_img)
 
 
 
-k = -0.45
-# dist_img('../img/image-resize.jpg', un_fitzgibbon, k)
-dewarp_video('../20190409AM/Camera 1 - Pano-20190409-114743-1554803263.mp4', 'save_dir', un_fov, pi*0.0005)
+# k = -0.45
+# # dist_img('../img/image-resize.jpg', un_fitzgibbon, k)
+# dewarp_video('../20190409AM/Camera 1 - Pano-20190409-114743-1554803263.mp4', 'save_dir', un_fov, pi*0.0005)
 # log_params = {'lambda': 0.09, 's': 150}
-# dist_img('../img/image-resize.jpg', unlog, log_params)
-fov = pi*0.00085
-# dist_img('../img/image-resize.jpg', un_fov, fov)
+# dist_img('../../img/image-resize.jpg', un_log, log_params)
+# fov = pi*0.00085
+# # dist_img('../img/image-resize.jpg', un_fov, fov)
+# params = {'degree': 3, 'ks': np.array([-20, -20, -20])}
+# dist_img('../../img/image-resize.jpg', un_radial, params)
 
+# Testing models h/16 w/16
+# log_params = {'lambda': 0.09, 's': 150}
+# dist_img('imgs/original.jpg', un_log, log_params)
+
+# Paddings: py, px = int(h+1500), int(w+1500)
+# fov = pi*0.00085
+# dist_img('imgs/original.jpg', un_fov, fov)
+
+# Paddings: py, px = int(h+1500), int(w+1500)
+# fov = pi*0.00085
+# dist_img('imgs/original.jpg', un_fov, fov)
+
+params = {'h': 1144, 'w': 1024, 'k': -0.27}
+k = -0.45
+dist_img('imgs/original.jpg', un_fitzgibbon, params)
 
