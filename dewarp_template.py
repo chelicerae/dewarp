@@ -4,81 +4,65 @@ import numpy as np
 from math import sqrt, atan, exp, sin, cos, log, tan, pi
 
 
+def cartesian_to_polar(y, x):
+	return np.arctan2(y, x), sqrt(x**2 + y**2)
+
+def polar_to_cartesian(alpha, r):
+	return r*sin(alpha), r*cos(alpha)
+
 def un_sterad():
 	pass
 
 
 def un_log(yx, params):
 	ynd, xnd = yx[0], yx[1]
-	alpha = np.arctan2(ynd, xnd)
-	rd = sqrt(xnd**2 + ynd**2)
-
+	alpha, rd = cartesian_to_polar(ynd, xnd)
 	ru = params['s'] * log(1 + params['lambda']*rd)
-
-	ynu = ru*sin(alpha)
-	xnu = ru*cos(alpha)
-	return (ynu, xnu)
+	return polar_to_cartesian(alpha, ru)
 
 
 # A field of view reverce model function. 
 def un_fov(yx, fov):
 	ynd, xnd = yx[0], yx[1]
-	alpha = np.arctan2(ynd, xnd)
-	rnd = sqrt(ynd**2 + xnd**2)
-
-	rnu = atan(rnd*tan(fov))/tan(fov)
-
-	ynu = rnu*sin(alpha) 
-	xnu = rnu*cos(alpha) 
-	return (ynu, xnu)
+	alpha, rd = cartesian_to_polar(ynd, xnd)
+	ru = atan(rd*tan(fov))/tan(fov)
+	return polar_to_cartesian(alpha, ru)
 
 
 def un_fitzgibbon(yx, params):
 	ynd, xnd = yx[0]/(params['h']/2), yx[1]/(params['w']/2)
-	alpha = np.arctan2(ynd, xnd)
-	rnd = sqrt((xnd)**2 + (ynd)**2)
-
-	rnu = rnd/(1. - params['k']*(rnd**2))
-
-	ynu = rnu*sin(alpha) 
-	xnu = rnu*cos(alpha) 
+	alpha, rd = cartesian_to_polar(ynd, xnd)
+	ru = rd/(1. - params['k']*(rd**2))
+	ynu, xnu = polar_to_cartesian(alpha, ru)
+	# Denormalize from (-1, 1) range.
 	return (ynu*(params['h']/2), xnu*(params['w']/2))
 
 
 # params format {'degree' : degree of polynome, 'ks' : vector of dist coefs equal to degree in length}
 def un_radial(yx, params):
 	ynd, xnd = yx[0], yx[1]
-	alpha = np.arctan2(ynd, xnd)
-	rd = sqrt(xnd**2 + ynd**2)
-
+	alpha, rd = cartesian_to_polar(ynd, xnd)
+	# Count r pawer series and dot product of k's and r power series.
 	dgr = params['degree']
 	powers = np.array(range(dgr))
 	rd_vec = np.power(np.array([rd]*dgr), powers)
 	ru = rd * np.dot(params['ks'].T, rd_vec)
-
-	ynu = ru*sin(alpha)
-	xnu = ru*cos(alpha)
-	return (ynu, xnu)
+	return polar_to_cartesian(alpha, ru)
 
 
 # params format {'degree' : degree of polynome, 'ks' : vector of dist coefs equal to degree in length}
 def un_radial(yx, params):
 	ynd, xnd = yx[0], yx[1]
-	alpha = np.arctan2(ynd, xnd)
-	rd = sqrt(xnd**2 + ynd**2)
-
+	alpha, rd = cartesian_to_polar(ynd, xnd)
+	# Count r pawer series and dot product of k's and r power series.
 	dgr = params['degree']
 	powers = np.array(range(dgr))
 	rd_vec = np.power(np.array([rd]*dgr), powers)
 	ru = rd * np.dot(params['ks'].T, rd_vec)
-
-	ynu = ru*sin(alpha)
-	xnu = ru*cos(alpha)
-	return (ynu, xnu)
+	return polar_to_cartesian(alpha, ru)
 
 
-def dist_remap(h, w, py, px, dist_func, dist_params):
-
+def dist_remap(h, w, py=0, px=0, dist_func, dist_params):
 	# Create indeces remap matrix. 
 	mapxy = np.indices((h+2*py, w+2*px))
 
@@ -92,11 +76,10 @@ def dist_remap(h, w, py, px, dist_func, dist_params):
 
 	# Denormalize the obtained matrix with respecr to original image ratio.
 	dist_mapxy = (dist_mapnxy + [cy, cx]).astype(np.float32)
-	print(dist_mapxy[:, :, 0].shape, dist_mapxy[:, :, 1].shape)
 	return dist_mapxy[:, :, 0], dist_mapxy[:, :, 1]
 
 
-def dewarp_video(video_dir, save_dir, dist_func, dist_params):
+def dewarp_video(video_dir, save_dir, dist_func, dist_params, py=0, px=0):
 	cap = cv2.VideoCapture(video_dir)
 	fourcc = cv2.VideoWriter_fourcc(*'XVID')
 	# out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
@@ -108,7 +91,7 @@ def dewarp_video(video_dir, save_dir, dist_func, dist_params):
 	w = int(cap.get(3))  
 
 	start = time.time()
-	mapy, mapx = dist_remap(h, w, 0, 0, dist_func, dist_params)
+	mapy, mapx = dist_remap(h, w, py, px, dist_func, dist_params)
 	end = time.time()
 	print('Remap time:', end - start)
 
@@ -121,15 +104,13 @@ def dewarp_video(video_dir, save_dir, dist_func, dist_params):
 				break
 
 
-def dist_img(src_dir, dist_func, dist_params):
+def dist_img(src_dir, dist_func, dist_params, py=0, px=0):
 	# Resize image window for consistancy.
 	cv2.namedWindow('fisheye', cv2.WINDOW_NORMAL)
 	cv2.resizeWindow('fisheye', 900, 600)
 
 	img = cv2.imread(src_dir)
-	# img = cv2.copyMakeBorder(img, 128, 128, 0, 0, cv2.BORDER_CONSTANT)
 	h, w = img.shape[0], img.shape[1]
-	py, px = int(h/4), int(w/4)
 	mapy, mapx = dist_remap(h, w, py, px, dist_func, dist_params)
 
 	start = time.time()
@@ -143,17 +124,6 @@ def dist_img(src_dir, dist_func, dist_params):
 	cv2.imwrite('imgs/fitz.jpg', res_img)
 
 
-
-# k = -0.45
-# # dist_img('../img/image-resize.jpg', un_fitzgibbon, k)
-# dewarp_video('../20190409AM/Camera 1 - Pano-20190409-114743-1554803263.mp4', 'save_dir', un_fov, pi*0.0005)
-# log_params = {'lambda': 0.09, 's': 150}
-# dist_img('../../img/image-resize.jpg', un_log, log_params)
-# fov = pi*0.00085
-# # dist_img('../img/image-resize.jpg', un_fov, fov)
-# params = {'degree': 3, 'ks': np.array([-20, -20, -20])}
-# dist_img('../../img/image-resize.jpg', un_radial, params)
-
 # Testing models h/16 w/16
 # log_params = {'lambda': 0.09, 's': 150}
 # dist_img('imgs/original.jpg', un_log, log_params)
@@ -166,7 +136,6 @@ def dist_img(src_dir, dist_func, dist_params):
 # fov = pi*0.00085
 # dist_img('imgs/original.jpg', un_fov, fov)
 
-params = {'h': 1144, 'w': 1024, 'k': -0.27}
-k = -0.45
-dist_img('imgs/original.jpg', un_fitzgibbon, params)
+# params = {'h': 1144, 'w': 1024, 'k': -0.27}
+# dist_img('imgs/original.jpg', un_fitzgibbon, params)
 
