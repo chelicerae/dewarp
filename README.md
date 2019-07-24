@@ -19,12 +19,12 @@ Remaping matrix calculation takes some time, but regarding that it is the same f
 
 The are plenty of models here and there, but here are the ones I tried for now:
 
-- Logarithmic model [1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)
-- Field of view model [1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)
-- Fitgibbon model (simplified radial) [3](http://marcodiiga.github.io/radial-lens-undistortion-filtering)
-- Radial model [1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)
-- Division model [1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)
-- Sterad model [4](http://www.kscottz.com/fish-eye-lens-dewarping-and-panorama-stiching/)
+- Logarithmic model [[1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)]
+- Field of view model [[1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)][[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)]
+- Fitgibbon model (simplified radial) [[3](http://marcodiiga.github.io/radial-lens-undistortion-filtering)]
+- Radial model [[1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)][[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)]
+- Division model [[1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)][[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)]
+- Sterad model [[4](http://www.kscottz.com/fish-eye-lens-dewarping-and-panorama-stiching/)]
 
 Every model has some distortion paramethers in different forms. For now I don't have a method to find the "correct" values for them computationally, so all of them where just approximated ~~by hand~~ (lets say it was grid search :) ). Feel free to play with them by yourself, maybe you'll get better results
 
@@ -41,7 +41,7 @@ Here is th original image took from [here](http://paulbourke.net/dome/fish2/):
 
 ![original image](https://raw.githubusercontent.com/chelicerae/dewarp/master/imgs/log.jpg)
 
-The math behind the model can be found in corresponding paper [1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation). It had two paramethers: _s_, or scaling factor, and _lambda_, or scaling factor that controlls the amount of distortion. The distortion chnges the next way due to the change of this paramethers: the bigger the _s_ is the less there are pincussion distortion and the smaller the _lambda_ is the closer is the resulting image. So, I guess I somehow confused this to paramethers because _s_ behaves exactly like the scalling and visa versa. The results prooved to be not the ones I was expecting, maybe I made some mistake in implementing the model, so if you find one - report me. 
+The math behind the model can be found in corresponding paper [[1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)]. It had two paramethers: _s_, or scaling factor, and _lambda_, or scaling factor that controlls the amount of distortion. The distortion chnges the next way due to the change of this paramethers: the bigger the _s_ is the less there are pincussion distortion and the smaller the _lambda_ is the closer is the resulting image. So, I guess I somehow confused this to paramethers because _s_ behaves exactly like the scalling and visa versa. The results prooved to be not the ones I was expecting, maybe I made some mistake in implementing the model, so if you find one - report me. 
 
 #### Field of view (FOV) model 
 
@@ -49,13 +49,13 @@ The math behind the model can be found in corresponding paper [1](https://www.re
 
 ![original image](https://raw.githubusercontent.com/chelicerae/dewarp/master/imgs/fov.jpg)
 
-This one can bo found in [1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document). I use the revece function to obtain pincussion distortion in place of barrel one. The only paramether it takes is and angle in radians. The model showed the best results so far and it is said [2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document) that it can be combined with radial model (didn't try yet).
+This one can bo found in [[1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)]. I use the revece function to obtain pincussion distortion in place of barrel one. The only paramether it takes is and angle in radians. The model showed the best results so far and it is said [[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)] that it can be combined with radial model (didn't try yet).
 
 #### Fitzgibbon model 
 
 ![original image](https://raw.githubusercontent.com/chelicerae/dewarp/master/imgs/fitz.jpg)
 
-This is the simplest one, so it was the first to be implemented. Results are better than nothing but still not as good as FOV model. Further information about the model is found here [3](http://marcodiiga.github.io/radial-lens-undistortion-filtering).
+This is the simplest one, so it was the first to be implemented. Results are better than nothing but still not as good as FOV model. Further information about the model is found here [[3](http://marcodiiga.github.io/radial-lens-undistortion-filtering)].
 
 #### Steradian model
 
@@ -65,10 +65,10 @@ Steradian model is actually a quite creative idea that came to mind of [this per
 
 ### Reference
 
-[1] - [Lens Distortion Models Evaluation](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)
-[2] - [A Precision Analysis of Camera Distortion Models](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)
-[3] - [Radial lens undistortion filtering](http://marcodiiga.github.io/radial-lens-undistortion-filtering)
-[4] - [Fish Eye Lens Dewarping and Panorama Stiching](http://www.kscottz.com/fish-eye-lens-dewarping-and-panorama-stiching/)
+- [1] - [Lens Distortion Models Evaluation](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)
+- [2] - [A Precision Analysis of Camera Distortion Models](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)
+- [3] - [Radial lens undistortion filtering](http://marcodiiga.github.io/radial-lens-undistortion-filtering)
+- [4] - [Fish Eye Lens Dewarping and Panorama Stiching](http://www.kscottz.com/fish-eye-lens-dewarping-and-panorama-stiching/)
 
 
 
