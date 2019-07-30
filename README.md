@@ -8,8 +8,8 @@ I was challanged with task of fisheye distortion correction. The photos needed t
 
 The pipeline can be discribed as follows: 
 1. The original picture is passed.
-2. Two remaping index matrix are created, for y and x axis respectivly. Their size equall to the original image size, or be bigger in case when paddings are used. Paddings are needed if the full picture is required. By default (with 0 padding) the resulting image is cropped due to the "streching of image" with pincussion distortion.
-3. Every value of remapping matrix (lets think of it as tensor containing coordinates of x and y) is normalized, so that middle point become (0,0). It will be trated as principal point of the lens.
+2. Two remaping index matrix are created, for y and x axis respectivly. Their size is equall to the original image size, or may be bigger in case when paddings are used. Paddings are needed if the full picture is required. By default (with 0 padding), the resulting image is cropped due to the "streching of image" with pincussion distortion.
+3. Every value of remapping matrix (lets think of it as tensor containing coordinates of x and y) is normalized, so that middle point becomes (0,0). It will be trated as principal point of the lens.
 4. Each normalized index is transformed to polar coordinates and passed (in a vectorized manner for speeding up the process) to distortion (or redistortion if you will) function, changing to a new pair of index which _represents the position of pixel on original image with index equal to the value of remapping matrix cell that is to be moved to the this position on remap matrix_. This may be tricky at first glance, so take some time to understand how `cv2.remap()` works, hope [this](https://stackoverflow.com/questions/46520123/how-do-i-use-opencvs-remap-function) helps.
 5. The obtained matrix (something like a blueprint for the transformed image construction) is then renormalized with respect to size of original image and the padding, if used, and passed to `cv2.remap()` gaining the final transformed image.
 
@@ -34,14 +34,14 @@ In fututre maybe I will implement some kind of distortion paramether "calibratio
 
 Here I will dive into practical details about models, so that it would be easier for you to use them. All of them use polar coordinate system because in this case it is much more handfull and demands less code.
 
-Here is th original image took from [here](http://paulbourke.net/dome/fish2/):
+Here is the original image took from [here](http://paulbourke.net/dome/fish2/):
 ![original image](https://raw.githubusercontent.com/chelicerae/dewarp/master/imgs/original.jpg)
 
 #### Logarithmic model 
 
 ![original image](https://raw.githubusercontent.com/chelicerae/dewarp/master/imgs/log.jpg)
 
-The math behind the model can be found in corresponding paper [[1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)]. It had two paramethers: _s_, or scaling factor, and _lambda_, or scaling factor that controlls the amount of distortion. The distortion chnges the next way due to the change of this paramethers: the bigger the _s_ is the less there are pincussion distortion and the smaller the _lambda_ is the closer is the resulting image. So, I guess I somehow confused this to paramethers because _s_ behaves exactly like the scalling and visa versa. The results prooved to be not the ones I was expecting, maybe I made some mistake in implementing the model, so if you find one - report me. 
+The math behind the model can be found in corresponding paper [[1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)]. It had two paramethers: _s_, or scaling factor, and _lambda_ that controlls the amount of distortion. The distortion changes the next way due to the change of this paramethers: the bigger the _s_ is the less there are pincussion distortion and the smaller the _lambda_ is the closer is the resulting image. So, I guess I somehow confused this to paramethers because _s_ behaves exactly like the scalling paramether and visa versa. The results prooved to be not the ones I was expecting, maybe I made some mistake in implementing the model, so if you find one, I would be grateful if you report me. 
 
 #### Field of view (FOV) model 
 
@@ -49,7 +49,7 @@ The math behind the model can be found in corresponding paper [[1](https://www.r
 
 ![original image](https://raw.githubusercontent.com/chelicerae/dewarp/master/imgs/fov.jpg)
 
-This one can bo found in [[1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)]. I use the revece function to obtain pincussion distortion in place of barrel one. The only paramether it takes is and angle in radians. The model showed the best results so far and it is said [[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)] that it can be combined with radial model (didn't try yet).
+This one can bo found in [[1](https://www.researchgate.net/publication/47510646_Lens_Distortion_Models_Evaluation)[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)]. I use the reverce function to obtain pincussion distortion in place of barrel one. The only paramether it takes is and angle in radians. The model showed the best results so far and it is said [[2](https://hal-enpc.archives-ouvertes.fr/hal-01556898/document)] that it can be combined with radial model (didn't try it out yet).
 
 #### Fitzgibbon model 
 
