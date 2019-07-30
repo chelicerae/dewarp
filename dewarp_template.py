@@ -1,6 +1,7 @@
 import cv2
 import time
 import numpy as np
+from matplotlib import pyplot
 from math import sqrt, atan, exp, sin, cos, log, tan, pi
 
 
@@ -111,7 +112,7 @@ def un_division(yx, params):
 	return polar_to_cartesian(alpha, ru)
 
 
-def dist_remap(h, w, py=0, px=0, dist_func, dist_params):
+def dist_remap(h, w, dist_func, dist_params, py=0, px=0):
 	"""
 	Returns two remap function for x and y respectively using dist_func to indexes.
 	h, w : int, int
@@ -166,7 +167,7 @@ def dewarp_video(video_dir, save_dir, dist_func, dist_params, py=0, px=0):
 	w = int(cap.get(3))  
 
 	start = time.time()
-	mapy, mapx = dist_remap(h, w, py, px, dist_func, dist_params)
+	mapy, mapx = dist_remap(h, w, dist_func, dist_params, py, px)
 	end = time.time()
 	print('Remap time:', end - start)
 
@@ -200,7 +201,7 @@ def dist_img(src_dir, dist_func, dist_params, py=0, px=0):
 
 	img = cv2.imread(src_dir)
 	h, w = img.shape[0], img.shape[1]
-	mapy, mapx = dist_remap(h, w, py, px, dist_func, dist_params)
+	mapy, mapx = dist_remap(h, w, dist_func, dist_params, py, px)
 
 	start = time.time()
 	res_img = cv2.remap(img, mapx, mapy, cv2.INTER_LINEAR)
@@ -211,6 +212,31 @@ def dist_img(src_dir, dist_func, dist_params, py=0, px=0):
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
 	cv2.imwrite('imgs/fitz.jpg', res_img)
+
+def plotTC(fnc, dist_params, mindim, maxdim, inc):
+	"""
+	Build plot of time spent on remaping function building dependant on square image size.
+	fnc : function
+		Dewarping function used for pixel remaping.
+	dist_params : any
+		Distortion paramethers passed to fnc. Data type is distortion function specific.
+	mindim : int
+		Starting image size (mindim, mindim).
+	maxdim : int
+		Final image size (maxdim, maxdim).	
+	inc : int
+		Step of size progression from mindim to maxdim.
+	"""
+	x = []
+	y = []
+	for i in range(mindim, maxdim, inc):
+		start = time.time()
+		dist_remap(i, i, fnc, dist_params)
+		end = time.time()
+		x.append(i)
+		y.append(end - start)
+	pyplot.plot(x, y, 'ro-')
+	pyplot.show()
 
 
 # Testing models h/16 w/16
@@ -227,4 +253,7 @@ def dist_img(src_dir, dist_func, dist_params, py=0, px=0):
 
 # params = {'h': 1144, 'w': 1024, 'k': -0.27}
 # dist_img('imgs/original.jpg', un_fitzgibbon, params)
+
+plotTC(un_fov, pi*0.00085, 100, 500, 100)
+
 
